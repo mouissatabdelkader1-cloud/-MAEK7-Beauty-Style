@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>MAEK7 Beauty & Style | ذكاء اصطناعي للجمال والموضة</title>
+    <script type="importmap">
+        {
+            "imports": {
+                "@google/generative-ai": "https://esm.run/@google/generative-ai"
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        :root {
+            --bg-dark: #1a1118;
+            --bg-card: #2a1e24;
+            --bg-input: #2d232a;
+            --border: #4a3743;
+            --text: #fbe9f0;
+            --text-muted: #d4b8c4;
+            --primary: #f7a1c4;
+            --primary-dark: #e06e9a;
+            --success: #b0e57c;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            transition: all 0.3s;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        /* header */
+        .hero {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        .hero p {
+            color: var(--text-muted);
+        }
+
+        /* بطاقات عامة */
+        .card {
+            background: var(--bg-card);
+            border-radius: 32px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 1.6rem;
+            margin-bottom: 16px;
+            border-right: 4px solid var(--primary);
+            padding-right: 16px;
+        }
+
+        /* منطقة رفع الصورة */
+        .upload-area {
+            text-align: center;
+            border: 2px dashed var(--primary);
+            border-radius: 28px;
+            padding: 30px;
+            background: var(--bg-input);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .upload-area:hover {
+            background: #3e2c36;
+        }
+        .upload-icon {
+            font-size: 48px;
+        }
+        #preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 24px;
+            margin-top: 16px;
+            display: none;
+            object-fit: contain;
+        }
+
+        /* شبكة النتائج */
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 20px;
+        }
+        .suggestion-card {
+            background: var(--bg-input);
+            border-radius: 24px;
+            padding: 20px;
+            transition: 0.2s;
+        }
+        .suggestion-card h3 {
+            color: var(--primary);
+            margin-bottom: 12px;
+            font-size: 1.3rem;
+        }
+        .suggestion-img {
+            width: 100%;
+            background: #3e2e38;
+            border-radius: 20px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 16px 0;
+            color: var(--text-muted);
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+        }
+        .badge {
+            display: inline-block;
+            background: var(--primary-dark);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        button {
+            background: var(--primary);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: bold;
+            color: #1a1118;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.2s;
+            width: 100%;
+        }
+        button:hover {
+            background: var(--primary-dark);
+            transform: scale(0.98);
+        }
+        .api-input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 60px;
+            color: var(--text);
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--primary);
+            color: #1a1118;
+            padding: 12px 24px;
+            border-radius: 40px;
+            z-index: 2000;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px);}
+            to { opacity: 1; transform: translateX(0);}
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        @media (max-width: 700px) {
+            .results-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>💄 MAEK7 Beauty & Style</h1>
+        <p>✨ ذكاء اصطناعي لتحليل وجهك – اقتراحات تسريحات، ماكياج، عناية بالبشرة مخصصة لكِ ✨</p>
+    </div>
+
+    <div class="card">
+        <div style="margin-bottom: 20px;">
+            <input type="password" id="apiKey" class="api-input" placeholder="🔑 مفتاح Gemini API (AIza...)" oninput="saveApiKey()">
+            <div id="apiStatus" style="font-size: 13px;">⚙️ انتظار المفتاح</div>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📸</div>
+            <p>اضغطي لرفع صورة شخصية واضحة (وجه مكشوف، إضاءة جيدة)</p>
+            <input type="file" id="photoInput" accept="image/*" style="display:none;">
+            <img id="preview" alt="معاينة الصورة">
+        </div>
+
+        <button id="analyzeBtn" style="margin-top: 20px;">🔮 تحليل ملامحي واقتراح الإطلالات</button>
+        <div id="loading" class="loading">⏳ جاري التحليل الذكي... قد يستغرق 10-15 ثانية</div>
+    </div>
+
+    <div id="resultsContainer" style="display: none;">
+        <div class="card">
+            <div class="card-title">💇‍♀️ تسريحات شعر مقترحة</div>
+            <div id="hairstyles" class="results-grid"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">💄 ماكياج يناسب بشرتكِ</div>
+            <div id="makeup" class="results-grid"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🧴 حلول لمشاكل البشرة والجسم</div>
+            <div id="skinSolutions" class="results-grid"></div>
+        </div>
+        <div class="card">
+            <div class="card-title">🌟 نصائح مخصصة للعناية اليومية</div>
+            <div id="tips" style="background: var(--bg-input); border-radius: 24px; padding: 20px;"></div>
+        </div>
+    </div>
+    <footer>🔒 خصوصية: صورتكِ تُحلل محلياً عبر Gemini API ولا تُخزن على الخوادم.</footer>
+</div>
+
+<script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
+
+    // عناصر DOM
+    const apiInput = document.getElementById('apiKey');
+    const apiStatusSpan = document.getElementById('apiStatus');
+    const uploadArea = document.getElementById('uploadArea');
+    const photoInput = document.getElementById('photoInput');
+    const previewImg = document.getElementById('preview');
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const loadingDiv = document.getElementById('loading');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const hairstylesDiv = document.getElementById('hairstyles');
+    const makeupDiv = document.getElementById('makeup');
+    const skinDiv = document.getElementById('skinSolutions');
+    const tipsDiv = document.getElementById('tips');
+
+    let currentImageBase64 = null;
+
+    // المفتاح
+    function hasValidKey() {
+        const key = apiInput.value.trim();
+        return key && key.length > 10;
+    }
+    function updateApiStatus() {
+        if (hasValidKey()) {
+            apiStatusSpan.innerHTML = '🟢 مفتاح نشط – جاهزة للتحليل';
+            apiStatusSpan.style.color = '#b0e57c';
+        } else {
+            apiStatusSpan.innerHTML = '🔴 الرجاء إدخال مفتاح Gemini API صالح';
+            apiStatusSpan.style.color = '#f7a1c4';
+        }
+    }
+    window.saveApiKey = () => {
+        localStorage.setItem('maek7_beauty_key', apiInput.value.trim());
+        updateApiStatus();
+    };
+
+    // رفع الصورة ومعاينتها
+    uploadArea.addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                currentImageBase64 = ev.target.result;
+                previewImg.src = currentImageBase64;
+                previewImg.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // عرض إشعار سريع
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.innerText = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+    }
+
+    // تحليل الصورة باستخدام Gemini
+    async function analyzeImageAndSuggest(base64Image) {
+        const apiKey = apiInput.value.trim();
+        if (!apiKey) throw new Error("مفتاح Gemini مفقود أو غير صحيح");
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        const prompt = `
+أنت خبيرة تجميل وستايلست عالمية. حللي الصورة المرفقة لوجه امرأة (ملامح، شكل الوجه، لون البشرة، نوع البشرة، مشاكل ظاهرة مثل حب الشباب أو هالات سوداء، لون الشعر ونوعه).
+
+بناءً على التحليل، قدمي تقريراً مقسماً إلى أربعة أقسام بالضبط كما يلي (استخدمي تنسيق HTML نظيف مع عناوين):
+
+1. **تسريحات شعر** (اقترحي 3 تسريحات مناسبة مع وصف لكل تسريحة وأسلوبها)
+2. **ماكياج** (اقترحي 3 إطلالات ماكياج: طبيعي، سهرة، نهار. لكل إطلالة حددي: أحمر شفاه، ظلال عيون، كونتور، وبلاشر)
+3. **حلول لمشاكل البشرة والجسم** (إذا وجدت حب شباب، هالات، بقع، جفاف، اقترحي مكونات وعلاجات طبيعية أو منتجات)
+4. **نصائح يومية مخصصة** (3 نصائح سريعة للعناية حسب نوع البشرة ونمط الحياة)
+
+**أهم شيء**: لا تستخدمي نجوم Markdown، فقط HTML بسيط (div, p, ul, li). لا تكرري المعلومات. تكون الإجابات عملية ومبهجة ومفصلة بما يكفي.
+
+--- تذكير: حللي الصورة بدقة ---
+        `;
+
+        const imagePart = {
+            inlineData: {
+                data: base64Image.split(',')[1],
+                mimeType: "image/jpeg"
+            }
+        };
+        const result = await model.generateContent([prompt, imagePart]);
+        const responseText = result.response.text();
+        return responseText;
+    }
+
+    // استخراج الأقسام من الـ HTML الذي يعيده النموذج
+    function parseSections(htmlText) {
+        // محاولة بسيطة لتقسيم النص إذا لم يكن منظماً بشكل مثالي
+        const sections = {
+            hairstyles: [],
+            makeup: [],
+            skin: [],
+            tips: ""
+        };
+        // نستخدم regex بسيط للكشف عن العناوين
+        const hairstyleMatch = htmlText.match(/تسريحات شعر(.*?)(ماكياج|حلول لمشاكل|نصائح يومية)/is);
+        const makeupMatch = htmlText.match(/ماكياج(.*?)(حلول لمشاكل|نصائح يومية|تسريحات شعر)/is);
+        const skinMatch = htmlText.match(/حلول لمشاكل(.*?)(نصائح يومية|ماكياج|تسريحات شعر)/is);
+        const tipsMatch = htmlText.match(/نصائح يومية(.*?)$/is);
+
+        if (hairstyleMatch && hairstyleMatch[1]) sections.hairstyles = [hairstyleMatch[1].trim()];
+        if (makeupMatch && makeupMatch[1]) sections.makeup = [makeupMatch[1].trim()];
+        if (skinMatch && skinMatch[1]) sections.skin = [skinMatch[1].trim()];
+        if (tipsMatch && tipsMatch[1]) sections.tips = tipsMatch[1].trim();
+
+        // إذا فشل التقسيم نعرض النص كاملاً في الحلول كحل احتياطي
+        if (!hairstyleMatch && !makeupMatch && !skinMatch) {
+            sections.hairstyles = [htmlText];
+        }
+        return sections;
+    }
+
+    // عرض الاقتراحات في الواجهة
+    function displaySuggestions(sections) {
+        // تسريحات
+        hairstylesDiv.innerHTML = '';
+        if (sections.hairstyles.length) {
+            sections.hairstyles.forEach((text, idx) => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+                card.innerHTML = `
+                    <div class="badge">تسريحة ${idx+1}</div>
+                    <div class="suggestion-img">💇‍♀️ نموذج توضيحي لتسريحة تناسبكِ</div>
+                    <p>${text.substring(0, 300)}${text.length > 300 ? '...' : ''}</p>
+                `;
+                hairstylesDiv.appendChild(card);
+            });
+        } else {
+            hairstylesDiv.innerHTML = '<div class="suggestion-card">❌ لم يتم استلام اقتراحات محددة، حاولي مرة أخرى.</div>';
+        }
+
+        // ماكياج
+        makeupDiv.innerHTML = '';
+        if (sections.makeup.length) {
+            sections.makeup.forEach((text, idx) => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+                card.innerHTML = `
+                    <div class="badge">إطلالة ${idx+1}</div>
+                    <div class="suggestion-img">💄 لوك ماكياج مقترح</div>
+                    <p>${text.substring(0, 300)}</p>
+                `;
+                makeupDiv.appendChild(card);
+            });
+        } else {
+            makeupDiv.innerHTML = '<div class="suggestion-card">✨ لم يتم العثور على اقتراحات ماكياج محددة.</div>';
+        }
+
+        // حلول البشرة
+        skinDiv.innerHTML = '';
+        if (sections.skin.length) {
+            sections.skin.forEach((text) => {
+                const card = document.createElement('div');
+                card.className = 'suggestion-card';
+                card.innerHTML = `<div class="suggestion-img">🧴 روتين عناية مقترح</div><p>${text.substring(0, 400)}</p>`;
+                skinDiv.appendChild(card);
+            });
+        } else {
+            skinDiv.innerHTML = '<div class="suggestion-card">🌟 لا توجد مشاكل جلدية ظاهرة، واصلِ روتينكِ الوقائي.</div>';
+        }
+
+        // نصائح يومية
+        tipsDiv.innerHTML = sections.tips ? `<p>✨ ${sections.tips}</p>` : '<p>✨ حافظي على ترطيب بشرتكِ واستخدمي واقي الشمس يومياً.</p>';
+    }
+
+    // دالة التحليل الرئيسية
+    analyzeBtn.addEventListener('click', async () => {
+        if (!hasValidKey()) {
+            showToast("⚠️ يرجى إدخال مفتاح Gemini API صالح أولاً", true);
+            return;
+        }
+        if (!currentImageBase64) {
+            showToast("📸 يرجى رفع صورة شخصية أولاً");
+            return;
+        }
+
+        loadingDiv.style.display = 'block';
+        resultsContainer.style.display = 'none';
+
+        try {
+            const analysisHtml = await analyzeImageAndSuggest(currentImageBase64);
+            console.log("رد النموذج:", analysisHtml);
+            const parsed = parseSections(analysisHtml);
+            displaySuggestions(parsed);
+            resultsContainer.style.display = 'block';
+            showToast("✅ تم التحليل بنجاح! استعرضي الاقتراحات أدناه");
+        } catch (err) {
+            console.error(err);
+            showToast("❌ حدث خطأ: " + err.message, true);
+        } finally {
+            loadingDiv.style.display = 'none';
+        }
+    });
+
+    // تحميل المفتاح المحفوظ
+    const savedKey = localStorage.getItem('maek7_beauty_key');
+    if (savedKey) apiInput.value = savedKey;
+    updateApiStatus();
+</script>
+</body>
+</html>
